@@ -1,0 +1,56 @@
+#!/usr/bin/tclsh
+#
+# Tcl script to produce a collection of pdf files
+#
+
+set pdf_file_name   pru_code.pdf
+
+# Determine the current working directory
+
+set  cur_dir      [pwd] 
+
+# Set location of where files to be printed are located
+
+set  src_dir      $cur_dir
+
+# Name of temporary directory used for storing
+# intermediate ps and pdf files
+
+set  pdf_dir      ${cur_dir}/pdf_tmp_dir
+
+# Create temp directory for storing ps and pdf files
+
+file mkdir  ${pdf_dir}
+
+# Goto source directory and create a list of file_names
+
+cd   ${src_dir}
+set  file_list    [glob *.h *.c]
+
+# Print (to a file) each file using enscript
+
+foreach file_name ${file_list} {
+   set  name     ${src_dir}/${file_name}
+   puts ${name}
+   set  ps_name  ${pdf_dir}/${file_name}.ps
+#   catch {exec enscript -r -p ${ps_name} ${name} }
+   catch {exec enscript  -p ${ps_name} ${name} }
+}
+
+# Convert each ps file into a pdf file
+
+cd ${pdf_dir}
+foreach file_name ${file_list} {
+   set  ps_name   ${file_name}.ps
+   exec ps2pdf ${ps_name}
+}
+
+# Combine the pdf documents into one file
+# Put the document in current working directory
+
+set file_list  [glob *.pdf]
+eval exec gs -dBATCH -dNOPAUSE -sDEVICE=pdfwrite -sOutputFile=${cur_dir}/${pdf_file_name} ${file_list}
+
+# Remove the pdf tmp dir
+
+file delete -force ${pdf_dir}

@@ -1,0 +1,333 @@
+******************************************************************************
+                     PRU Linker Unix v2.0.0                    
+******************************************************************************
+>> Linked Thu Jul 28 13:45:11 2016
+
+OUTPUT FILE NAME:   <pru0.elf>
+ENTRY POINT SYMBOL: "_c_int00_noinit_noargs_noexit"  address: 00000f84
+
+
+MEMORY CONFIGURATION
+
+         name            origin    length      used     unused   attr    fill
+----------------------  --------  ---------  --------  --------  ----  --------
+PAGE 0:
+  PRU_IMEM              00000000   00002000  00000fd0  00001030  RWIX
+
+PAGE 1:
+  PRU_DMEM_0_1          00000000   00002000  0000011c  00001ee4  RWIX
+  PRU_DMEM_1_0          00002000   00002000  00000000  00002000  RWIX
+  PRU_SHAREDMEM         00010000   00003000  00000000  00003000  RWIX
+  PRU_INTC              00020000   00001504  00001504  00000000  RWIX
+  PRU_CFG               00026000   00000100  00000000  00000100  RWIX
+  PRU_UART              00028000   00000100  00000000  00000100  RWIX
+  PRU_IEP               0002e000   0000031c  00000000  0000031c  RWIX
+  PRU_ECAP              00030000   00000100  00000000  00000100  RWIX
+  RSVD27                00032000   00000100  00000000  00000100  RWIX
+  MDIO                  00032400   00000100  00000000  00000100  RWIX
+  L3OCMC                40000000   00010000  00000000  00010000  RWIX
+  MCASP0_DMA            46000000   00000100  00000000  00000100  RWIX
+  UART1                 48022000   00000100  00000000  00000100  RWIX
+  UART2                 48024000   00000100  00000000  00000100  RWIX
+  I2C1                  4802a000   00000100  00000000  00000100  RWIX
+  MCSPI0                48030000   00000100  00000000  00000100  RWIX
+  DMTIMER2              48040000   00000100  00000000  00000100  RWIX
+  MMCHS0                48060000   00000100  00000000  00000100  RWIX
+  MBX0                  480c8000   00000100  00000000  00000100  RWIX
+  SPINLOCK              480ca000   00000100  00000000  00000100  RWIX
+  I2C2                  4819c000   00000100  00000000  00000100  RWIX
+  MCSPI1                481a0000   00000100  00000000  00000100  RWIX
+  DCAN0                 481cc000   00000100  00000000  00000100  RWIX
+  DCAN1                 481d0000   00000100  00000000  00000100  RWIX
+  EHRPWM1               48300000   00000100  00000000  00000100  RWIX
+  EHRPWM2               48302000   00000100  00000000  00000100  RWIX
+  EHRPWM3               48304000   00000100  00000000  00000100  RWIX
+  RSVD13                48310000   00000100  00000000  00000100  RWIX
+  RSVD10                48318000   00000100  00000000  00000100  RWIX
+  TPCC                  49000000   000010a0  00000000  000010a0  RWIX
+  GEMAC                 4a100000   00000100  00000000  00000100  RWIX
+  DDR                   80000000   00000100  00000000  00000100  RWIX
+
+
+SECTION ALLOCATION MAP
+
+ output                                  attributes/
+section   page    origin      length       input sections
+--------  ----  ----------  ----------   ----------------
+.text      0    00000000    00000fd0     
+                  00000000    000002f0     motorLib.obj (.text:adjustSetpoint)
+                  000002f0    000002f0     motorLib.obj (.text:move)
+                  000005e0    00000238     motorLib.obj (.text:PID)
+                  00000818    000001a4     motorLib.obj (.text:createState)
+                  000009bc    00000150     rtspruv2_le.lib : llmpy.obj (.text:__pruabi_mpyll)
+                  00000b0c    00000118     motorLib.obj (.text:doCommand)
+                  00000c24    00000098     pru0Lib.obj (.text:GPIO3pin)
+                  00000cbc    00000098     pru0.obj (.text:main)
+                  00000d54    00000064     pru0Lib.obj (.text:initGPIO)
+                  00000db8    00000060     rtspruv2_le.lib : imath64.obj (.text:__pruabi_lslll)
+                  00000e18    0000004c     pru0.obj (.text:killTime)
+                  00000e64    00000044     rtspruv2_le.lib : imath64.obj (.text:__pruabi_lsrll)
+                  00000ea8    00000028     motorLib.obj (.text:coast)
+                  00000ed0    00000028     motorLib.obj (.text:haltPRU)
+                  00000ef8    00000028     motorLib.obj (.text:hardBrake)
+                  00000f20    00000024     rtspruv2_le.lib : mpyi.obj (.text:__pruabi_mpyi)
+                  00000f44    00000024     pru0.obj (.text:initPRU)
+                  00000f68    0000001c     pru0.obj (.text:waitForInterrupt)
+                  00000f84    00000014     rtspruv2_le.lib : boot_special.obj (.text:_c_int00_noinit_noargs_noexit)
+                  00000f98    00000014     pru0Lib.obj (.text:disableBuffers)
+                  00000fac    00000014     pru0Lib.obj (.text:enableBuffers)
+                  00000fc0    00000008     rtspruv2_le.lib : exit.obj (.text:abort)
+                  00000fc8    00000008                     : exit.obj (.text:loader_exit)
+
+.stack     1    00000000    00000100     UNINITIALIZED
+                  00000000    00000004     rtspruv2_le.lib : boot.obj (.stack)
+                  00000004    000000fc     --HOLE--
+
+.bss       1    00000100    0000001c     UNINITIALIZED
+                  00000100    0000001c     pru0.obj (.bss)
+
+.cinit     1    00000000    00000000     UNINITIALIZED
+
+.creg.PRU_INTC.noload.near 
+*          1    00020000    00000000     NOLOAD SECTION
+
+.creg.PRU_INTC.near 
+*          1    00020000    00000000     UNINITIALIZED
+
+.creg.PRU_INTC.noload.far 
+*          1    00020000    00001504     NOLOAD SECTION
+                  00020000    00001504     pru0.obj (.creg.PRU_INTC.noload.far)
+
+.creg.PRU_INTC.far 
+*          1    00021504    00000000     UNINITIALIZED
+
+
+SEGMENT ATTRIBUTES
+
+    id tag      seg value
+    -- ---      --- -----
+     0 PHA_PAGE 1   1    
+
+
+GLOBAL SYMBOLS: SORTED ALPHABETICALLY BY Name 
+
+address    name
+--------   ----
+00000fc8   C$$EXIT
+00020000   CT_INTC
+00000c24   GPIO3pin
+000005e0   PID
+481cc000   __PRU_CREG_BASE_DCAN0
+481d0000   __PRU_CREG_BASE_DCAN1
+80000000   __PRU_CREG_BASE_DDR
+48040000   __PRU_CREG_BASE_DMTIMER2
+48300000   __PRU_CREG_BASE_EHRPWM1
+48302000   __PRU_CREG_BASE_EHRPWM2
+48304000   __PRU_CREG_BASE_EHRPWM3
+4a100000   __PRU_CREG_BASE_GEMAC
+4802a000   __PRU_CREG_BASE_I2C1
+4819c000   __PRU_CREG_BASE_I2C2
+40000000   __PRU_CREG_BASE_L3OCMC
+480c8000   __PRU_CREG_BASE_MBX0
+46000000   __PRU_CREG_BASE_MCASP0_DMA
+48030000   __PRU_CREG_BASE_MCSPI0
+481a0000   __PRU_CREG_BASE_MCSPI1
+00032400   __PRU_CREG_BASE_MDIO
+48060000   __PRU_CREG_BASE_MMCHS0
+00026000   __PRU_CREG_BASE_PRU_CFG
+00000000   __PRU_CREG_BASE_PRU_DMEM_0_1
+00002000   __PRU_CREG_BASE_PRU_DMEM_1_0
+00030000   __PRU_CREG_BASE_PRU_ECAP
+0002e000   __PRU_CREG_BASE_PRU_IEP
+00020000   __PRU_CREG_BASE_PRU_INTC
+00010000   __PRU_CREG_BASE_PRU_SHAREDMEM
+00028000   __PRU_CREG_BASE_PRU_UART
+48318000   __PRU_CREG_BASE_RSVD10
+48310000   __PRU_CREG_BASE_RSVD13
+00032000   __PRU_CREG_BASE_RSVD27
+480ca000   __PRU_CREG_BASE_SPINLOCK
+49000000   __PRU_CREG_BASE_TPCC
+48022000   __PRU_CREG_BASE_UART1
+48024000   __PRU_CREG_BASE_UART2
+0000000e   __PRU_CREG_DCAN0
+0000000f   __PRU_CREG_DCAN1
+0000001f   __PRU_CREG_DDR
+00000001   __PRU_CREG_DMTIMER2
+00000012   __PRU_CREG_EHRPWM1
+00000013   __PRU_CREG_EHRPWM2
+00000014   __PRU_CREG_EHRPWM3
+00000009   __PRU_CREG_GEMAC
+00000002   __PRU_CREG_I2C1
+00000011   __PRU_CREG_I2C2
+0000001e   __PRU_CREG_L3OCMC
+00000016   __PRU_CREG_MBX0
+00000008   __PRU_CREG_MCASP0_DMA
+00000006   __PRU_CREG_MCSPI0
+00000010   __PRU_CREG_MCSPI1
+00000015   __PRU_CREG_MDIO
+00000005   __PRU_CREG_MMCHS0
+00000004   __PRU_CREG_PRU_CFG
+00000018   __PRU_CREG_PRU_DMEM_0_1
+00000019   __PRU_CREG_PRU_DMEM_1_0
+00000003   __PRU_CREG_PRU_ECAP
+0000001a   __PRU_CREG_PRU_IEP
+00000000   __PRU_CREG_PRU_INTC
+0000001c   __PRU_CREG_PRU_SHAREDMEM
+00000007   __PRU_CREG_PRU_UART
+0000000a   __PRU_CREG_RSVD10
+0000000d   __PRU_CREG_RSVD13
+0000001b   __PRU_CREG_RSVD27
+00000017   __PRU_CREG_SPINLOCK
+0000001d   __PRU_CREG_TPCC
+0000000b   __PRU_CREG_UART1
+0000000c   __PRU_CREG_UART2
+00000100   __TI_STACK_END
+00000100   __TI_STACK_SIZE
+00000001   __TI_args_main
+00000001   __TI_auto_init
+00000001   __TI_c_int00
+00000001   __TI_exit
+ffffffff   __binit__
+ffffffff   __c_args__
+00000db8   __pruabi_lslll
+00000e64   __pruabi_lsrll
+00000f20   __pruabi_mpyi
+000009bc   __pruabi_mpyll
+00000f84   _c_int00_noinit_noargs_noexit
+00000000   _stack
+00000fc0   abort
+00000000   adjustSetpoint
+ffffffff   binit
+00000104   clrGPIO1_reg
+00000110   clrGPIO3_reg
+00000ea8   coast
+00000818   createState
+00000f98   disableBuffers
+00000b0c   doCommand
+00000fac   enableBuffers
+00000ed0   haltPRU
+00000ef8   hardBrake
+00000d54   initGPIO
+00000f44   initPRU
+00000e18   killTime
+00000cbc   main
+00000100   mem
+000002f0   move
+0000010c   readGPIO1_reg
+00000118   readGPIO3_reg
+00000108   setGPIO1_reg
+00000114   setGPIO3_reg
+00000f68   waitForInterrupt
+
+
+GLOBAL SYMBOLS: SORTED BY Symbol Address 
+
+address    name
+--------   ----
+00000000   __PRU_CREG_BASE_PRU_DMEM_0_1
+00000000   __PRU_CREG_PRU_INTC
+00000000   _stack
+00000000   adjustSetpoint
+00000001   __PRU_CREG_DMTIMER2
+00000001   __TI_args_main
+00000001   __TI_auto_init
+00000001   __TI_c_int00
+00000001   __TI_exit
+00000002   __PRU_CREG_I2C1
+00000003   __PRU_CREG_PRU_ECAP
+00000004   __PRU_CREG_PRU_CFG
+00000005   __PRU_CREG_MMCHS0
+00000006   __PRU_CREG_MCSPI0
+00000007   __PRU_CREG_PRU_UART
+00000008   __PRU_CREG_MCASP0_DMA
+00000009   __PRU_CREG_GEMAC
+0000000a   __PRU_CREG_RSVD10
+0000000b   __PRU_CREG_UART1
+0000000c   __PRU_CREG_UART2
+0000000d   __PRU_CREG_RSVD13
+0000000e   __PRU_CREG_DCAN0
+0000000f   __PRU_CREG_DCAN1
+00000010   __PRU_CREG_MCSPI1
+00000011   __PRU_CREG_I2C2
+00000012   __PRU_CREG_EHRPWM1
+00000013   __PRU_CREG_EHRPWM2
+00000014   __PRU_CREG_EHRPWM3
+00000015   __PRU_CREG_MDIO
+00000016   __PRU_CREG_MBX0
+00000017   __PRU_CREG_SPINLOCK
+00000018   __PRU_CREG_PRU_DMEM_0_1
+00000019   __PRU_CREG_PRU_DMEM_1_0
+0000001a   __PRU_CREG_PRU_IEP
+0000001b   __PRU_CREG_RSVD27
+0000001c   __PRU_CREG_PRU_SHAREDMEM
+0000001d   __PRU_CREG_TPCC
+0000001e   __PRU_CREG_L3OCMC
+0000001f   __PRU_CREG_DDR
+00000100   __TI_STACK_END
+00000100   __TI_STACK_SIZE
+00000100   mem
+00000104   clrGPIO1_reg
+00000108   setGPIO1_reg
+0000010c   readGPIO1_reg
+00000110   clrGPIO3_reg
+00000114   setGPIO3_reg
+00000118   readGPIO3_reg
+000002f0   move
+000005e0   PID
+00000818   createState
+000009bc   __pruabi_mpyll
+00000b0c   doCommand
+00000c24   GPIO3pin
+00000cbc   main
+00000d54   initGPIO
+00000db8   __pruabi_lslll
+00000e18   killTime
+00000e64   __pruabi_lsrll
+00000ea8   coast
+00000ed0   haltPRU
+00000ef8   hardBrake
+00000f20   __pruabi_mpyi
+00000f44   initPRU
+00000f68   waitForInterrupt
+00000f84   _c_int00_noinit_noargs_noexit
+00000f98   disableBuffers
+00000fac   enableBuffers
+00000fc0   abort
+00000fc8   C$$EXIT
+00002000   __PRU_CREG_BASE_PRU_DMEM_1_0
+00010000   __PRU_CREG_BASE_PRU_SHAREDMEM
+00020000   CT_INTC
+00020000   __PRU_CREG_BASE_PRU_INTC
+00026000   __PRU_CREG_BASE_PRU_CFG
+00028000   __PRU_CREG_BASE_PRU_UART
+0002e000   __PRU_CREG_BASE_PRU_IEP
+00030000   __PRU_CREG_BASE_PRU_ECAP
+00032000   __PRU_CREG_BASE_RSVD27
+00032400   __PRU_CREG_BASE_MDIO
+40000000   __PRU_CREG_BASE_L3OCMC
+46000000   __PRU_CREG_BASE_MCASP0_DMA
+48022000   __PRU_CREG_BASE_UART1
+48024000   __PRU_CREG_BASE_UART2
+4802a000   __PRU_CREG_BASE_I2C1
+48030000   __PRU_CREG_BASE_MCSPI0
+48040000   __PRU_CREG_BASE_DMTIMER2
+48060000   __PRU_CREG_BASE_MMCHS0
+480c8000   __PRU_CREG_BASE_MBX0
+480ca000   __PRU_CREG_BASE_SPINLOCK
+4819c000   __PRU_CREG_BASE_I2C2
+481a0000   __PRU_CREG_BASE_MCSPI1
+481cc000   __PRU_CREG_BASE_DCAN0
+481d0000   __PRU_CREG_BASE_DCAN1
+48300000   __PRU_CREG_BASE_EHRPWM1
+48302000   __PRU_CREG_BASE_EHRPWM2
+48304000   __PRU_CREG_BASE_EHRPWM3
+48310000   __PRU_CREG_BASE_RSVD13
+48318000   __PRU_CREG_BASE_RSVD10
+49000000   __PRU_CREG_BASE_TPCC
+4a100000   __PRU_CREG_BASE_GEMAC
+80000000   __PRU_CREG_BASE_DDR
+ffffffff   __binit__
+ffffffff   __c_args__
+ffffffff   binit
+
+[105 symbols]
