@@ -33,12 +33,12 @@ int arc_config(void) {
 
 // Right motor configuration
 
-   robot.right_motor.id = 2 ;			        // Blue motor number
+   robot.right_motor.id = 1 ;			        // Blue motor number
    robot.right_motor.swap = ARC_SWAP ;	        // No need to swap motor wires
 
 // Left motor configuration
 
-   robot.left_motor.id = 3 ;                    // Blue motor number
+   robot.left_motor.id = 2 ;                    // Blue motor number
    robot.left_motor.swap = ARC_NO_SWAP ;        // Swap blk and red wires
 
 // Config common to both motors

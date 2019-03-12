@@ -76,7 +76,7 @@ int  main() {
 
 // Set starting location and orientation
 
-    loc.x = 0 ; loc.y = 0 ; loc.theta = M_PI / 2.0  ; 
+    loc.x = 0 ; loc.y = 0 ; loc.theta = 0  ; 
 
     if (arc_init(loc) == ARC_FAIL) {
 		fprintf(stderr,"ERROR: failed to initialize robot. Aborting\n");
@@ -85,8 +85,8 @@ int  main() {
 
 // Set target location, orientation, and robot velocity
 
-    loc.x = 0 ; loc.y = 36.0 ; loc.theta = ARC_PI / 2.0  ;
-    robot.velocity = 24.0 ;
+    loc.x = 0; loc.y = 0.0 ; loc.theta = 0  ;
+    robot.velocity = 5.0 ;
 
 // Goto target location
 
