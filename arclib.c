@@ -186,6 +186,22 @@ int  arc_goto(arc_location_t target_loc) {
     double          tmp ;
     arc_location_t  loc ;
 
+
+	rc_encoder_write(robot.right_motor.id, 0);
+        rc_encoder_write(robot.left_motor.id, 0);
+        double thetaGoal = atan2(target_loc.x,target_loc.y);
+        double tickGoal = (166.67 * 2.625 * thetaGoal) / 2;
+        printf("Tick Goal: %0.1f\n",tickGoal);
+        rc_motor_set(robot.right_motor.id, .5*robot.right_motor.swap * robot.right_motor.dir);
+        rc_motor_set(robot.left_motor.id, -.5*robot.left_motor.swap * robot.left_motor.dir);
+        while(-1*rc_encoder_read(robot.right_motor.id) <= (int) tickGoal);
+        rc_motor_set(robot.right_motor.id, 0);
+        rc_motor_set(robot.left_motor.id, 0);
+        target_loc.y = sqrt(pow(target_loc.x,2) + pow(target_loc.y,2));
+        target_loc.x = 0;
+        arc_var_dump(); 
+        std::exit(1);
+
 // Set flag for target reached location
 
    target_reached = ARC_FALSE ;
