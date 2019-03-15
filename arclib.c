@@ -7,9 +7,8 @@
 #include    <math.h>
 #include    <robotcontrol.h>
 #include    <rc/math.h>
-
 #include   "arcdefs.h"
- 
+#include    <unistd.h> 
 extern  arc_robot_t  robot ;
 
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -24,8 +23,8 @@ int arc_config(void) {
 
     robot.config.sample_rate = 50.0 ;                   		// Hz
     robot.config.Ts = 1.0 / robot.config.sample_rate ;	        // sec
-    robot.config.r = 1.375 ;                                    // wheel radius
-    robot.config.d = 5.25 ;                 	                // distance between wheels
+    robot.config.r = 1.915 ;                                    // wheel radius
+    robot.config.d = 5.86 ;                 	                // distance between wheels
     robot.config.encoder_tics_per_revolution = 1440.0 ; 
     robot.config.motor_PID_gain.Kp = 0.005 ;				    // Proportional gain constant
     robot.config.motor_PID_gain.Ki = 0.0005 ;				    // Integral gain constant
@@ -146,6 +145,7 @@ int arc_init(arc_location_t loc) {
 // and left motor tic values
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+// odometry
 arc_location_t  arc_update_location(arc_location_t  cur_loc, int ticsR, int ticsL) {
    arc_location_t   loc ;
    double           delta_s, delta_theta ;
@@ -186,7 +186,8 @@ int  arc_goto(arc_location_t target_loc) {
     double          tmp ;
     arc_location_t  loc ;
 
-
+	// rotate to point robot at point using atan2
+	// sets the value to the correct distance and resets encoders
 	rc_encoder_write(robot.right_motor.id, 0);
         rc_encoder_write(robot.left_motor.id, 0);
         double thetaGoal = atan2(target_loc.x,target_loc.y);
@@ -200,6 +201,8 @@ int  arc_goto(arc_location_t target_loc) {
         target_loc.y = sqrt(pow(target_loc.x,2) + pow(target_loc.y,2));
         target_loc.x = 0;
         arc_var_dump(); 
+	printf("Rotated to target goal, moving in 1.0 second");
+	sleep(1);
         std::exit(1);
 
 // Set flag for target reached location
