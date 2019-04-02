@@ -1,0 +1,2 @@
+scp blue_test debian@blue:~/bin/
+ssh debian@blue -t '~/bin/blue_test'

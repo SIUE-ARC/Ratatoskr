@@ -1,0 +1,2 @@
+scp bluebot debian@blue:~/bin/
+ssh debian@blue -t 'sudo ~/bin/bluebot'

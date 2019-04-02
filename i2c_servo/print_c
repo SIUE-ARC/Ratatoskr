@@ -1,0 +1,67 @@
+#!/usr/bin/tclsh
+#
+# Tcl script to produce a collection of pdf files
+# from verilog source files
+#
+
+set     this_dir        [pwd]
+set 	pdf_file_name   $this_dir/test_servo.pdf
+
+# set 	src_dir     	$env(SRC}
+
+set 	src_dir     	$this_dir
+
+# cd to where source is located
+
+cd 		$src_dir
+
+# Name of temporary directory used for storing
+# intermediate ps and pdf files
+
+set  	pdf_tmp_dir         $this_dir/pdf_tmp_dir
+
+# Create temp directory for storing ps and pdf files
+# Delete an old one if it should exist
+
+if { [file 	exists 	$pdf_tmp_dir] } {
+	file 	delete 		-force		$pdf_tmp_dir
+}
+
+# Create the temporary directory
+
+file 	mkdir  	${pdf_tmp_dir}
+
+# Create a list of verilog related files
+
+set  file_list    [glob   *.c *.h]
+
+# puts 	"files ----> $file_list"
+
+# Print (to a file) each file using enscript
+
+foreach 	file_name 		${file_list} {
+   set  name     ${src_dir}/${file_name}
+   set  ps_name  ${pdf_tmp_dir}/${file_name}.ps
+   catch {exec enscript -r -p ${ps_name} ${name}}
+}
+
+# cd to the pdf temporary directory
+
+cd ${pdf_tmp_dir}
+
+# Convert each ps file into a pdf file
+
+foreach 	file_name 	${file_list} {
+   set  	ps_name   	${file_name}.ps
+   exec 	ps2pdf 		${ps_name}
+}
+
+# Combine the pdf documents into one file
+# Put the document in current working directory
+
+set 	file_list  		[glob *.pdf]
+eval    exec gs -dBATCH -dNOPAUSE -sDEVICE=pdfwrite -sOutputFile=${pdf_file_name} ${file_list}
+
+# Remove the pdf tmp dir
+
+file delete -force ${pdf_tmp_dir}

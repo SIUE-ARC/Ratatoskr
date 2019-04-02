@@ -1,0 +1,453 @@
+//
+// arclib is a library of robot routimes 
+// makes heavy use of strawson libcontrol
+//
+
+#include    <stdio.h>
+#include    <stdlib.h>
+#include    <math.h>
+#include    <robotcontrol.h>
+
+#include   "arcdefs.h"
+
+extern  arc_robot_t  robot ;
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// Routine to dump key values
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+void arc_var_dump(void) {
+    printf("Sample rate is %g Hz\n", robot.config.sample_rate) ;
+    printf("Sample period is %g ms\n", 1000.0 * robot.config.Ts) ;
+    printf("Wheel radius is %g in\n", robot.config.r) ;
+    printf("Encoder tics per wheel revolution is %g\n", robot.config.encoder_tics_per_revolution) ;
+    printf("Inches per tic is %g\n", robot.config.inches_per_tic) ;
+    printf("Tics per inch is %g\n", robot.config.tics_per_inch) ;
+    printf("Maximum pwm value is %g\n", robot.config.max_pwm) ;
+    printf("Velocity of robot is %g in/sec\n", robot.velocity) ;
+    printf("Right motor setpoint is %d\n", robot.right_motor.sp) ;
+    printf("Left motor setpoint is %d\n", robot.left_motor.sp) ;
+} // end arc_dump()
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// Routine print location
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+void arc_print_location(arc_location_t loc) {
+    printf("x is %g in\n", loc.xy.d[X]) ;
+    printf("y is %g in\n", loc.xy.d[Y]) ;
+    printf("theta is %g degrees\n", loc.theta * ARC_RAD2DEG) ;
+} // end arc_print_location()
+
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// Routine to initialize everything
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+int arc_init(void) {
+
+    double	Kp, Ki, Kd, dt ;
+
+// Set up the filters we need for PID on right and left motors
+
+    Kp = robot.config.motor_PID_gain.Kp ;
+    Ki = robot.config.motor_PID_gain.Ki ;
+    Kd = robot.config.motor_PID_gain.Kd ;
+    dt = robot.config.Ts ;
+
+// Create the right and left motor PID filter
+
+    if(rc_filter_pid(robot.right_motor.pid, Kp, Ki, Kd, (4.0 * dt), dt)){
+        fprintf(stderr,"ERROR in arc_init(), failed to make PID right motor controller filter.\n");
+        return ARC_FAIL ;
+    }
+    if(rc_filter_pid(robot.left_motor.pid, Kp, Ki, Kd, (4.0 * dt), dt)){
+	fprintf(stderr,"ERROR in arc_init(), failed to make PID left motor controller filter.\n");
+	return ARC_FAIL ;
+    }
+
+// Initialize motors and encoders
+
+    if (rc_motor_init_freq(RC_MOTOR_DEFAULT_PWM_FREQ)) {
+        return ARC_FAIL;	// Set PWM frequency
+    }
+    if (rc_motor_init()==-1){
+        fprintf(stderr,"ERROR: failed to initialize motors\n");
+        return ARC_FAIL;
+    }
+
+    if (rc_encoder_eqep_init()==-1){
+        fprintf(stderr,"ERROR: failed to initialize eqep encoders\n");
+        return ARC_FAIL;
+    }
+
+// Turn both LEDs OFF
+
+    rc_led_set(RC_LED_GREEN, ARC_OFF);
+    robot.greenLED = ARC_OFF ;
+    rc_led_set(RC_LED_RED, ARC_OFF);
+    robot.redLED = ARC_OFF ;
+    return ARC_PASS ;
+
+} // end arc_init() 
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// Routine to convert degrees to radians
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+double arc_deg2rad(double deg) {
+    return  ((M_PI / 180.0) * deg) ;
+} // end arc_deg2rad()
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// Routine to convert radians to degrees
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+double arc_rad2deg(double rad) {
+    return  ((180.0 / M_PI) * rad) ;
+} // end arc_rad2deg()
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// Routine to make sure angle between 0 and 2*pi
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+double arc_constrain_angle(double angle) {
+   if (angle > 2.0 * M_PI) angle -= 2.0 * M_PI ;
+   if (angle < 0) angle += 2.0 * M_PI ;
+   return angle ; 
+} // end arc_clamp_angle()
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// Routine used to update our location
+// Accepts current location along with right tic
+// and left motor tic values
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+void  arc_update_location(void) {
+   double           delta_s, delta_theta ;
+   double           delta_x, delta_y ;
+   double           ticsR, ticsL ;
+
+   ticsR = robot.right_motor.tics ;
+   ticsR *= robot.right_motor.dir ;
+
+   ticsL = robot.left_motor.tics ;
+   ticsL *= robot.left_motor.dir ;
+
+   delta_s = 0.5 * (ticsR + ticsL) ;
+   delta_s *= robot.config.inches_per_tic ;
+   robot.location.s += delta_s ;
+
+   delta_theta = ticsR - ticsL ;
+   delta_theta *= robot.config.inches_per_tic ;
+   delta_theta /= robot.config.d ;
+   robot.location.theta += delta_theta ;
+
+   delta_x = delta_s * cos(robot.location.theta) ;
+   delta_y = delta_s * sin(robot.location.theta) ;
+   robot.location.xy.d[X] += delta_x ;
+   robot.location.xy.d[Y] += delta_y ;  
+ 
+   return ;
+} // end arc_update_location() 
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// Routine used to toggle green LED
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+void toggleGreenLED(void) {
+
+   if (robot.greenLED == ARC_ON) {
+      robot.greenLED = ARC_OFF ;
+      rc_led_set(RC_LED_GREEN, ARC_OFF);
+   } else {
+      robot.greenLED = ARC_ON ;
+      rc_led_set(RC_LED_GREEN, ARC_ON);
+   } 
+     return ;
+} // end toggleGreenLED() 
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// Routine used by arc_goto for initialization
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+void  arc_move_init(int right_dir, int left_dir, bool soft_start) 
+{
+   double   td, tmp ;
+
+// Reset the PID filters
+// Enable saturation and ask for a slow start in the PID filters
+
+    rc_filter_reset(robot.right_motor.pid) ;
+    rc_filter_reset(robot.left_motor.pid) ;    
+    rc_filter_enable_saturation(robot.right_motor.pid, 0, robot.config.max_pwm) ;
+    rc_filter_enable_saturation(robot.left_motor.pid, 0, robot.config.max_pwm) ;
+    if (soft_start) {
+       td = 2.0 * robot.config.Ts ;
+       rc_filter_enable_soft_start(robot.right_motor.pid, td) ;
+       rc_filter_enable_soft_start(robot.left_motor.pid, td) ;
+    }
+
+// Set motor directions
+
+    robot.right_motor.dir = right_dir ;
+    robot.left_motor.dir = left_dir ;
+
+// Encoder initialization
+// Set encoder values to 0
+
+    rc_encoder_write(robot.right_motor.id, 0) ;
+    rc_encoder_write(robot.left_motor.id, 0) ;
+
+// Compute number of tics we expect to see in sample period
+// This is the setpoint into the PID controller
+
+    robot.right_motor.pwm = 0.0 ; 
+    robot.left_motor.pwm = 0.0 ;
+    robot.right_motor.cnt = 0 ; 
+    robot.left_motor.cnt = 0 ;
+    tmp = robot.config.Ts * robot.velocity ;
+    tmp = tmp / robot.config.inches_per_tic ;
+    robot.right_motor.sp = (int) (tmp + 0.5) ;
+    robot.left_motor.sp = (int) (tmp + 0.5) ;
+    robot.location.s = 0.0 ;
+
+    return ;
+} // end arc_move_init()
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// Routine to move robot 
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+void  arc_move(void) {
+     int	     error ;  
+
+// Read right and left motor encoders
+// Compute how far each wheel moved in "tics"
+// during previous sample period.
+
+    robot.right_motor.old_cnt = robot.right_motor.cnt ;
+    robot.left_motor.old_cnt = robot.left_motor.cnt ;
+ 
+    robot.right_motor.cnt = abs(rc_encoder_read(robot.right_motor.id)) ;
+    robot.left_motor.cnt = abs(rc_encoder_read(robot.left_motor.id)) ;
+
+    robot.right_motor.tics = robot.right_motor.cnt - robot.right_motor.old_cnt ;
+    robot.left_motor.tics = robot.left_motor.cnt - robot.left_motor.old_cnt ;
+ 
+// Update pwm values for motors
+// We might need to "swap" black and red wires
+
+    robot.right_motor.pwm *= robot.right_motor.swap * robot.right_motor.dir ;
+    robot.left_motor.pwm *= robot.left_motor.swap * robot.left_motor.dir ;
+
+    rc_motor_set(robot.right_motor.id, robot.right_motor.pwm) ;
+    rc_motor_set(robot.left_motor.id, robot.left_motor.pwm) ;
+
+// Compute error and filter
+// Error is the difference between how many tics we actually moved
+// and what we had expected to move.
+
+    error = (double) (robot.right_motor.sp - robot.right_motor.tics) ;
+    robot.right_motor.pwm = rc_filter_march(robot.right_motor.pid, error) ;
+
+    error = (double) (robot.left_motor.sp - robot.left_motor.tics) ;
+    robot.left_motor.pwm = rc_filter_march(robot.left_motor.pid, error) ;  
+
+// Update our location
+  
+    arc_update_location() ;
+
+// Toggle the green LED to inform user that we are in the move routine
+
+    toggleGreenLED() ;
+
+} // end arc_move()
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// Routine to compute the heading
+// Heading consists of a distance and an angle
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+arc_heading_t  arc_compute_heading(void) {
+   arc_heading_t  heading ;
+   rc_vector_t    dv = RC_VECTOR_INITIALIZER ;
+   double         angle ;
+
+   rc_vector_zeros(&dv, 2) ;
+
+// Compute the vector differnce between current and target locations
+
+   rc_vector_subtract(robot.target.xy, robot.location.xy, &dv) ;
+
+// Compute 2-norm (distance measure) of difference vector
+ 
+   heading.distance = rc_vector_norm(dv, 2)  ;
+
+// Find angle
+   
+   angle = abs(atan(dv.d[Y] / dv.d[X])) ;
+   if ((dv.d[X] >= 0) && (dv.d[Y] >= 0)) angle = angle ;
+   if ((dv.d[X] >= 0) && (dv.d[Y] <= 0)) angle += arc_deg2rad(270.0) ;
+   if ((dv.d[X] <= 0) && (dv.d[Y] <= 0)) angle += arc_deg2rad(180.0) ;
+   if ((dv.d[X] <= 0) && (dv.d[Y] >= 0)) angle += arc_deg2rad(90.0) ;
+
+   heading.angle = angle ;
+   return heading ;
+
+} // end arc_compute_heading()
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// Routine to rotate robot
+// Angle value should be in radians
+// It the amount we want to rotate by
+// + is CCW and - is CW
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+void  arc_rotate(double angle) {
+    int             target_reached ;
+    uint64_t        start_time ;
+    unsigned int    delay_time ;
+    double          err, max_err ;
+ 
+   robot.location.theta = 0.0 ;
+   robot.velocity = ROTATE_VEL ;
+
+// We will accept a specified amount of error in our final location
+
+   max_err = arc_deg2rad(MAX_ANGLE_ERROR)  ; 
+
+// Wheels must rotate in opposite direction for a rotation
+   
+   if (fabs(angle) <= max_err) return ;
+   if (angle >= 0.0) arc_move_init(ARC_FWD, ARC_BWD, false) ;  // Counter clock-wise
+   else arc_move_init(ARC_BWD, ARC_FWD, true) ;               // Clock-wise
+
+// Keep "moving" until we get "very close" to our desired orientation
+// Compute delay on the fly to ensure fixed sample period!
+
+   target_reached = false ;
+   while (target_reached == false) {  
+      start_time = rc_nanos_since_epoch() ;     
+      arc_move() ;
+      err = angle - robot.location.theta ;
+      if (fabs(err) < max_err) target_reached = true ;
+      if (rc_get_state() != EXITING) {
+         delay_time = (unsigned int) ( (robot.config.Ts_in_ns - (rc_nanos_since_epoch() - start_time)) );
+         delay_time /= 1000 ;              
+         rc_usleep(delay_time);
+      } else return ;
+   } // end while
+   rc_motor_brake(0) ;
+   rc_usleep(500000) ;
+   return ;
+
+} // end arc_rotate() ;
+
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// Routine to "goto" given location (BUGGY)
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+void  arc_goto(double x, double y, double theta, double velocity) {
+    bool            target_reached ;
+    uint64_t        start_time ;
+    unsigned int    delay_time ;
+    arc_heading_t   heading ;
+    double          errX, errY, angle, err ;
+    double          final_theta ;
+
+// Set target location
+
+    final_theta = theta ;
+    robot.target.theta = theta ;
+    robot.target.xy.d[X] = x ;
+    robot.target.xy.d[Y] = y ;
+    robot.velocity = ROTATE_VEL ;
+
+// Determine if all we need to do is rotate
+// If so, then rotate and return
+
+    errX = robot.target.xy.d[X] - robot.location.xy.d[X] ;
+    errY = robot.target.xy.d[Y] - robot.location.xy.d[Y] ;
+    if ((fabs(errX) < FP_TOL) && (fabs(errY) < FP_TOL)) {
+       angle = robot.target.theta - robot.location.theta ;
+       arc_rotate(angle) ;
+       return ;
+    }
+
+// Need to do more than just rotate
+// Compute a heading
+
+    heading = arc_compute_heading() ;
+
+// Do rotation first
+
+    angle = robot.location.theta - heading.angle ;    
+//    arc_rotate(heading.angle) ;
+
+// Now move forward a distance heading.distance
+
+    robot.velocity = velocity ;
+    arc_move_init(ARC_FWD, ARC_FWD, true) ;
+    target_reached = false ;
+    while (target_reached == false) {  
+      start_time = rc_nanos_since_epoch() ;     
+      arc_move() ;
+      err = heading.distance - robot.location.s ;
+      if (fabs(err) < MAX_DIST_ERROR) target_reached = true ;
+      if (rc_get_state() != EXITING) {
+         delay_time = (unsigned int) ( (robot.config.Ts_in_ns - (rc_nanos_since_epoch() - start_time)) );
+         delay_time /= 1000 ;              
+         rc_usleep(delay_time);
+      } else return ;
+    } // end while
+
+// Rotate to get in the desired position
+
+    angle = final_theta - robot.location.theta ;
+    robot.velocity = ROTATE_VEL ;
+    arc_rotate(angle) ;
+    rc_usleep(500000) ;
+
+    return ;
+} // end arc_goto() 
+
+
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// Routine used to move forward
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+void  arc_forward(double distance, double velocity) {
+    bool            target_reached ;
+    uint64_t        start_time ;
+    unsigned int    delay_time ;
+    double          err ;
+
+    robot.location.theta = 0.0 ;
+    robot.velocity = velocity ;
+    arc_move_init(ARC_FWD, ARC_FWD, true) ;
+    target_reached = false ;
+    while (target_reached == false) {  
+      start_time = rc_nanos_since_epoch() ;     
+      arc_move() ;
+      err = distance - robot.location.s ;
+      if (fabs(err) < MAX_DIST_ERROR) target_reached = true ;
+      if (rc_get_state() != EXITING) {
+         delay_time = (unsigned int) ( (robot.config.Ts_in_ns - (rc_nanos_since_epoch() - start_time)) );
+         delay_time /= 1000 ;              
+         rc_usleep(delay_time);
+      } else return ;
+    } // end while
+    rc_motor_brake(0) ;
+//    printf("theta is %f \n", robot.location.theta) ;
+//    fflush(stdout) ;
+    arc_rotate(-1.0 * robot.location.theta) ;
+    rc_motor_brake(0) ;
+    rc_usleep(500000) ;
+    return ;
+} // end arc_forward() 
+
+
+

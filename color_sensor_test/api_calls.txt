@@ -1,0 +1,73 @@
+I2C
+IO
+Description
+C interface for the the Linux I2C driver.
+
+<rc/i2c.h>
+
+Developed and tested on the BeagleBone Black but should work fine on any Linux system.
+
+Author
+James Strawson
+Date
+1/19/2018
+Macros
+#define 	I2C_MAX_BUS   5
+ 	Maximum I2C bus identifier. Default is 5 for a total of 6 busses. This can be increased by the user for special cases. More...
+ 
+#define 	I2C_BUFFER_SIZE   128
+ 	size of i2c buffer in bytes for writing to registers. Only increase if you know what you are doing. More...
+ 
+Functions
+int 	rc_i2c_init (int bus, uint8_t devAddr)
+ 	Initializes a bus and sets it to talk to a particular device address. More...
+ 
+int 	rc_i2c_close (int bus)
+ 	Closes an I2C bus. More...
+ 
+int 	rc_i2c_set_device_address (int bus, uint8_t devAddr)
+ 	Changes the device address the bus is configured to talk to. More...
+ 
+int 	rc_i2c_read_byte (int bus, uint8_t regAddr, uint8_t *data)
+ 	Reads a single byte from a device register. More...
+ 
+int 	rc_i2c_read_bytes (int bus, uint8_t regAddr, size_t count, uint8_t *data)
+ 	Reads multiple bytes from a device register. More...
+ 
+int 	rc_i2c_read_word (int bus, uint8_t regAddr, uint16_t *data)
+ 	Reads a single word (16 bits) from a device register. More...
+ 
+int 	rc_i2c_read_words (int bus, uint8_t regAddr, size_t count, uint16_t *data)
+ 	Reads multiple words (16 bytes each) from a device register. More...
+ 
+int 	rc_i2c_write_byte (int bus, uint8_t regAddr, uint8_t data)
+ 	Writes a single byte to a specified register address. More...
+ 
+int 	rc_i2c_write_bytes (int bus, uint8_t regAddr, size_t count, uint8_t *data)
+ 	Writes multiple bytes to a specified register address. More...
+ 
+int 	rc_i2c_write_word (int bus, uint8_t regAddr, uint16_t data)
+ 	Writes a single word (16 bits) to a specified register address. More...
+ 
+int 	rc_i2c_write_words (int bus, uint8_t regAddr, size_t count, uint16_t *data)
+ 	Writes multiple words (16 bits each) to a specified register address. More...
+ 
+int 	rc_i2c_send_bytes (int bus, size_t count, uint8_t *data)
+ 	Sends exactly user-defined data without prepending a register address. More...
+ 
+int 	rc_i2c_send_byte (int bus, uint8_t data)
+ 	Sends exactly user-defined data without prepending a register address. More...
+ 
+int 	rc_i2c_lock_bus (int bus)
+ 	Locks the bus so other threads in the process know the bus is in use. More...
+ 
+int 	rc_i2c_unlock_bus (int bus)
+ 	Unlocks a bus to indicate to other threads in the process that the bus is now free. More...
+ 
+int 	rc_i2c_get_lock (int bus)
+ 	Fetches the current lock state of the bus. More...
+ 
+int 	rc_i2c_get_fd (int bus)
+ 	Gets file descriptor. More...
+ 
+

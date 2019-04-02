@@ -1,0 +1,2 @@
+scp test_vl53 debian@blue:~/bin/
+ssh debian@blue -t 'sudo ~/bin/test_vl53'
